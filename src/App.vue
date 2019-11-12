@@ -1,10 +1,19 @@
 <template>
     <div id="app">
       <v-app>
-        <div v-if="!gameStarted">
-          <v-btn color="success" @click="startGame()">START</v-btn>
+        <div v-if="!gameSelected">
+          <v-btn color="deep-purple" class="ma-2" dark @click="selectGame('snake')">SNAKE</v-btn>
+          <v-btn color="red darken-4" dark @click="selectGame('poker')">POKER</v-btn>
+        </div>
+        <div  v-if="gameSelected && !gameStarted">
+          <v-btn color="indigo" dark class="ma-2" @click="startGame()">START</v-btn>
+          <v-btn color="teal" dark @click="">JOIN</v-btn>
+        </div>
+        <div  v-if="gameStarted">
+          Available rooms:
         </div>
         <div v-if="gameStarted">
+          <canvas width="700" height="500" style="border:1px solid #000000;"></canvas>
           <img alt="Vue logo" :src="qrCodeUrl">
           <br>
           PEER ID: {{ peerId }}
@@ -32,10 +41,14 @@ export default {
     peerId: '',
     opponentPeerId: '',
     //qrCodeUrl: '',
-    gameStarted: false
+    gameSelected: false,
+    gameStarted: false,
+    selectedGame: ''
   }),
   created() {
     if (this.$route.query.peerid) {
+      console.log('peerid', this.$route.query.peerid)
+      this.opponentPeerId = this.$route.query.peerid
       this.joinGame()
     }
     // this.myPeer = new Peer();
@@ -68,7 +81,7 @@ export default {
   },
   computed: {
     qrCodeUrl: function() {
-      return "https://api.qrserver.com/v1/create-qr-code/?data=" + 'http://localhost:8080?peerid=' + this.peerId + "&size=200x200"
+      return "https://api.qrserver.com/v1/create-qr-code/?data=" + location.host + '?peerid=' + this.peerId + "&size=200x200"
     }
   },
   watch: {
@@ -108,19 +121,27 @@ export default {
 
     joinGame() {
         //this.initializePeer()
-        this.peer.on('open', function(id) {
+        this.peer = new Peer()
+        console.log('opponenttt',this.opponentPeerId)
+        this.peer.on('open', id => {
           this.peerId = id
-          this.connection = this.peer.connect(this.$route.query.peerid, {
+          console.log('opponent',this.opponentPeerId)
+          this.connection = this.peer.connect(this.opponentPeerId, {
             reliable: true
           })
           this.connection.on('open', function() {
-            this.opponentPeerId = this.$route.query.peerid
+            //this.opponentPeerId = this.$route.query.peerid
             // $('#game .alert p').text("Waiting for opponent's move")
             // $('#game').show().siblings('section').hide()
             // turn = false
             // begin()
           })
         })
+      },
+
+      selectGame(game) {
+        this.selectedGame = game
+        this.gameSelected = true
       }
   }
 }
